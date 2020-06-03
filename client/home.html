@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOME</title>
+</head>
+<body>
+  <h1>Busca la frase que quieras</h1>
+  <input type="text" id="phraseInput" style="width:50%; padding:8px;">
+  <div id="results"></div>
+
+  <script>
+
+    const phraseInput = document.getElementById("phraseInput");
+    const phraseContainer = document.getElementById("results");
+    const xhr = new XMLHttpRequest();
+  
+    phraseInput.addEventListener("keyup", function() {
+      //Variable que contiene el queryParam con el queryString, que obtengo del valor del input
+      let query = "?keyword="+this.value;
+  
+      //Si el input está vacío elimino lo que contenga el div phraseContainer (ul con sus li), y no envío ningun request. Si tiene algo armo y envío el request.
+      if (phraseInput.value == "") {
+        phraseContainer.innerHTML="";
+      } else {
+          xhr.open("GET", "/phrases" + query);
+          xhr.send();  
+      }
+    });
+  
+    xhr.onload = function (){
+      if (this.status == 200){
+        let results = JSON.parse(this.responseText);
+        //ejecuto la función pasándole como parámetro el array filtrado que obtengo del pedido AJAX
+        showPhrases(results);
+      }
+    }
+  
+    /**
+    @param{array}
+    * función que nos muestra en el DOM las frases que tengan partes coincidentes con lo que estamos buscando, resaltándonos en negrita las letras que coinciden
+    */
+    function showPhrases(phraseList) {
+      const ul = document.createElement("ul");
+      
+      phraseList.forEach(phrase => {
+        const li = document.createElement("li");
+        li.style.listStyle ="none";
+        
+        //separo la frase por las letras que coinciden con mi búsqueda
+        let newPhrase = phrase.split(phraseInput.value);
+        //vuelvo a unir la frase, sumándole la etiqueta <strong> a la parte que coincide con mi búsqueda
+        li.innerHTML = newPhrase.join(`<strong>${phraseInput.value}</strong>`);
+  
+        //Haciendo click en un li, su contenido pasa a ser el valor del input. Además al div contenedor se le aplica un display none para no ver las otras frases.
+        li.addEventListener('click',function(){
+          phraseInput.value = phrase;
+          phraseContainer.style.display="none";
+        });
+        
+        //Si el contenedor de las frases tiene un display diferente a block, le asigno el display block
+        if (phraseContainer.style.display !="block") phraseContainer.style.display ="block";
+        ul.appendChild(li);
+      });
+  
+      //borro la lista que tenía antes, y le agrego la nueva
+      phraseContainer.innerHTML = "";
+      phraseContainer.appendChild(ul);
+    }
+
+  </script>
+
+</body>
+</html>
